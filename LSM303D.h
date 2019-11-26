@@ -1,8 +1,7 @@
-
 #ifndef LSM303D_H_
 #define LSM303D_H_
 
-#include <vector>
+#include "math.h"
 #include <cstddef>
 #include "stm32f10x.h"
 
@@ -108,21 +107,91 @@ public:
 		T x, y, z;
 	};
 
-	std::vector <int16_t> a;       //acc values
-	std::vector <int16_t> m;       //mag values
-	std::vector <int16_t> max_m;   //mag max value
-	std::vector <int16_t> min_m;   //mag min value
+	V<int16_t> a;       //acc values
+	V<int16_t> m;       //mag values
+	V<int16_t> max_m;   //mag max value
+	V<int16_t> min_m;   //mag min value
 
-	//std::byte last_status;         //I2C status transmission *if wont work define by yourself
 	int8_t last_status;
 
 	LSM303D (void);
 
+	//Init functions//////////////////////////////
+	bool init (sa0state = sa0_auto);
+	void enableDefault(void);
+	//////////////////////////////////////////////
+
+	//Write&Read functions////////////////////////
+	void writeAccReg(int8_t reg, int8_t value);
+	int8_t readAccReg(int8_t reg);
+	void writeMagReg(int8_t reg, int8_t value);
+	int8_t reahMagReg(int8_t reg);
+	void writeReg(int8_t reg, int8_t value);
+	int8_t readReg(int8_t reg);
+
+	void readAcc(void);
+	void readMag(void);
+	void read(void);
+	//////////////////////////////////////////////
+
+	//Timeout handle functions////////////////////
+	void setTimeout(unsigned int timeout);
+	unsigned int getTimeout(void);
+	bool timeoutOccurred(void);
+	//////////////////////////////////////////////
+
+	//Heading functions///////////////////////////
+	float heading(void);
+	template <typename T> float heading(V<T> from);
+	//////////////////////////////////////////////
+
+	//V - vector functions////////////////////////
+	template <typename Ta, typename Tb, typename To> static void V_cross(const V<Ta> *a, const V<Tb> *b, const V<To> *out);
+	template <typename Ta, typename Tb> static float V_dot(const V<Ta> *a, const V<Tb> *b);
+	static void V_normalize(V<float> *a);
+	/////////////////////////////////////////////
+
+
 private:
-	//std::byte acc_adress;
 	int8_t acc_adress;
-	//std::byte mag_adress;
 	int8_t mag_adress;
+
+	unsigned int io_timeout;
+	bool did_timeout;
+
+	int testReg(int8_t address, register_adress reg);
 };
+
+template <typename T> float LSM303D::heading(V<T> from)
+{
+	V<int32_t> temp_m = {m.x, m.y, m.z};
+
+	temp_m.x -=((int32_t)min_m.x + max_m.x)/2;
+	temp_m.y -=((int32_t)min_m.y + max_m.y)/2;
+	temp_m.z -=((int32_t)min_m.z + max_m.z)/2;
+
+	V<float> E;
+	V<float> N;
+	V_cross(&temp_m, &a, &E);
+	V_normalize(&E);
+	V_cross(&a, &E, &N);
+	V_normalize(&N);
+
+	float heading = atan2(vector_dot(&E, &from), vector_dot(&N, &from)) * 180 / 3.14;
+	if (heading < 0) heading += 360;
+	return heading;
+}
+
+template <typename Ta, typename Tb, typename To> void LSM303D::V_cross(const V<Ta> *a, const V<Tb> *b, const V<To> *out)
+{
+	out->x = (a->y * b->z) - (a->z * b->y);
+	out->y = (a->z * b->x) - (a->x * b->z);
+	out->z = (a->x * b->y) - (a->y * b->x);
+}
+
+template <typename Ta, typename Tb> float LSM303D::V_dot(const V<Ta> *a, const V<Tb> *b)
+{
+	return (a->x * b->x) + (a->y * b->y) + (a->z * b->z);
+}
 
 #endif /* LSM303D_H_ */
