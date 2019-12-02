@@ -101,16 +101,22 @@ V LSM303D::readRawAcc()
 
     return v_RawAcc;
 }
-
-V LSM303D::readRawMag()
+/*Problem polega na tym ze Wire.available() <line 118> powinien zwracac ilosc reg dostepnych do odczytu
+  a zwraca w obecnym stanie zero 
+  -zly adress slave'a? https://www.pololu.com/file/0J703/LSM303D.pdf
+  -zly sposob odczytu danych?
+  -blad gdzie indziej?
+ */
+V LSM303D::readRawMag() 
 {
     Wire.beginTransmission(LSM_ADDRESS);
     Wire.write(OUT_X_L_M | (1 << 7));
     Wire.endTransmission();
     Wire.requestFrom(LSM_ADDRESS,6);
+
     Serial.println(LSM_ADDRESS);
-    delay (500);
     Serial.println(Wire.available());
+
     int8_t xlm = Wire.read();
     int8_t xhm = Wire.read();
     int8_t ylm = Wire.read();
@@ -119,8 +125,6 @@ V LSM303D::readRawMag()
     int8_t zhm = Wire.read();
     Wire.endTransmission();
     
-    Serial.println("DANE");
-    Serial.println(xlm);Serial.println(xhm);Serial.println(ylm);Serial.println(yhm);Serial.println(zlm);Serial.println(zhm);
     delay (1000);
     v_RawMag.x = (int16_t)(xhm << 8 | xlm) - i_xOffset;
     v_RawMag.y = (int16_t)(yhm << 8 | ylm) - i_yOffset;
