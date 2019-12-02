@@ -109,15 +109,15 @@ V LSM303D::readRawAcc()
  */
 V LSM303D::readRawMag() 
 {
-    Wire.beginTransmission(LSM_ADDRESS);
-    Wire.write(OUT_X_L_M | (1 << 7));
-    Wire.endTransmission();
-    Wire.requestFrom(LSM_ADDRESS,6);
+    Wire.beginTransmission(LSM_ADDRESS);  //LSM_ADDRESS 0b0011101 zaczynam transmisje:
+    Wire.write(OUT_X_L_M | (1 << 7));     //przygotowywuje adres 1 rejestru i ustawiam najstarszy bit na 1 w celu automatycznej inkrementacji
+    Wire.endTransmission();               //Koncze transmisje i wysylam write z linijki wyzej
+    Wire.requestFrom(LSM_ADDRESS,6);      //zadam od slave 6 rejestrow zaczynajac od OUT_X_L_M
 
     Serial.println(LSM_ADDRESS);
-    Serial.println(Wire.available());
+    Serial.println(Wire.available());     //powinno zwrocic wartosc 6 a zwraca zero ???? 
 
-    int8_t xlm = Wire.read();
+    int8_t xlm = Wire.read();             //Odczytanie wartosci wpisanie ich do zmiennych i zwrocenie wektora
     int8_t xhm = Wire.read();
     int8_t ylm = Wire.read();
     int8_t yhm = Wire.read();
