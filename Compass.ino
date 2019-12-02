@@ -58,7 +58,7 @@ void loop() {
       calibration.resetOffsets();
       while(Serial.available() == 0)
       {
-        v_mag = compass.readRawMag(); //tu jest blad
+        v_mag = compass.readRawMag(); // <-- tu jest blad (przechodzimy do LSM303D.cpp line 105)
  
         f_offX = calibration.findOffsetX(v_mag);
         f_offY = calibration.findOffsetY(v_mag);
@@ -72,7 +72,7 @@ void loop() {
     case'2':
       while(Serial.available() == 0)
       {
-        v_mag = compass.readNormalizeMag();
+        v_mag = compass.readNormalizeMag(); 
         v_acc = compass.readNormalizeAcc();
 
         f_heading1 = compensation.noTiltCompensation(v_mag);
